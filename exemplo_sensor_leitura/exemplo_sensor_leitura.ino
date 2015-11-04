@@ -1,4 +1,4 @@
-const int LM35 = 0;
+const int LM35 = 2;
 const int Buzzer = 12;
 float temperatura = 0;
 int ADClido = 0;
