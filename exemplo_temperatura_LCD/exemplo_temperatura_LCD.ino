@@ -19,7 +19,7 @@ void loop(){
   temperatura = ADClido * 0.48828125;
   
   lcd.setCursor(0,0);
-  lcd.print("Temperatura = ");
+  lcd.print("Temperatura =   ");
   lcd.setCursor(0,1);
   lcd.print(temperatura);
   lcd.print(" *C");
