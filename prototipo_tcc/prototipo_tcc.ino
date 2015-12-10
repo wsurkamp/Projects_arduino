@@ -104,7 +104,7 @@ void loop(){
   
   calculaNivel(); //verifica nvel da cisterna
   
-  //verificaParametros(); //atualiza parametrso de funcionamento do sistema
+  //verificaParametros(); //atualiza parametros de funcionamento do sistema
   
   escreveTela(); //indica nivel na cisterna no display LCD
   
@@ -154,6 +154,7 @@ void atualizaBanco(){
   dtostrf(statusSensor4, 1, 1, letterChar);
   sprintf(querySensor4, UPDATE_SENSOR4, statusSensor4);
   
+  //verificando querys via escrita serial
   Serial.println(queryValve1);
   Serial.println(queryValve2);
   Serial.println(queryPump1);
@@ -165,7 +166,7 @@ void atualizaBanco(){
   
   
    if (my_conn.is_connected()) {
-    //my_conn.cmd_query("UPDATE sistema_de_monitoramento.valve set open = '1' where id_valve = 2");
+    //atualiza os dados no banco remoto
     my_conn.cmd_query(queryValve1);
     my_conn.cmd_query(queryValve2);
     my_conn.cmd_query(queryPump1);
@@ -185,122 +186,6 @@ void atualizaBanco(){
       Serial.println("Connect failed!");
     }
    }
-  
-  
-  
-  /*
-  //preparando querys
-  char queryValve1[100];
-  char queryValve2[100];
-  char queryPump1[100];
-  char queryPump2[100];
-  char querySensor1[100];
-  char querySensor2[100];
-  char querySensor3[100];
-  char querySensor4[100];
-  
-  int statusSensor1 = 1;
-  int statusSensor2 = 1;
-  int statusSensor3 = 1;
-  int statusSensor4 = 1;
-  
-  sprintf(queryValve1, UPDATE_VALVE1, statusValve1);
-  sprintf(queryValve2, UPDATE_VALVE2, statusValve2);
-  sprintf(queryPump1, UPDATE_PUMP1, statusPump1);
-  sprintf(queryPump2, UPDATE_PUMP2, statusPump2);
-  sprintf(querySensor1, UPDATE_SENSOR1, statusSensor1);
-  sprintf(querySensor2, UPDATE_SENSOR2, statusSensor2);
-  sprintf(querySensor3, UPDATE_SENSOR3, statusSensor3);
-  sprintf(querySensor4, UPDATE_SENSOR4, statusSensor4);
-  *//*
-  if (statusValve1 == 1)
-    char UPDATE_VALVE1[] = "UPDATE sistema_de_monitoramento.valve SET open = 1 WHERE id_valve = 1";
-  else 
-    char UPDATE_VALVE1[] = "UPDATE sistema_de_monitoramento.valve SET open = 0 WHERE id_valve = 1";
-    
-  if (statusValve2 == 1)
-    char UPDATE_VALVE2[] = "UPDATE sistema_de_monitoramento.valve SET open = 1 WHERE id_valve = 2";
-  else 
-    char UPDATE_VALVE2[] = "UPDATE sistema_de_monitoramento.valve SET open = 0 WHERE id_valve = 2";
-
-  if (statusPump1 == 1)
-    char UPDATE_PUMP1[] = "UPDATE sistema_de_monitoramento.pump SET open = 1 WHERE id_pump = 1";
-  else 
-    char UPDATE_PUMP1[] = "UPDATE sistema_de_monitoramento.pump SET open = 0 WHERE id_pump = 1";
-    
-  if (statusPump2 == 1)
-    char UPDATE_PUMP2[] = "UPDATE sistema_de_monitoramento.pump SET open = 1 WHERE id_pump = 2";
-  else 
-    char UPDATE_PUMP2[] = "UPDATE sistema_de_monitoramento.pump SET open = 0 WHERE id_pump = 2";
-
-  if (nivelCisterna >= 80){
-    char UPDATE_SENSOR1[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 1";
-    char UPDATE_SENSOR2[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 2";
-    char UPDATE_SENSOR3[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 3";
-    char UPDATE_SENSOR4[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 4";
-  } else if (nivelCisterna >= 60){
-    char UPDATE_SENSOR1[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 1";
-    char UPDATE_SENSOR2[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 2";
-    char UPDATE_SENSOR3[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 3";
-    char UPDATE_SENSOR4[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 4";
-  } else if (nivelCisterna >= 40){
-    char UPDATE_SENSOR1[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 1";
-    char UPDATE_SENSOR2[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 2";
-    char UPDATE_SENSOR3[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 3";
-    char UPDATE_SENSOR4[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 4";
-  } else if (nivelCisterna >= 20){
-    char UPDATE_SENSOR1[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 1 WHERE id_sensor = 1";
-    char UPDATE_SENSOR2[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 2";
-    char UPDATE_SENSOR3[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 3";
-    char UPDATE_SENSOR4[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 4";
-  } else {
-    char UPDATE_SENSOR1[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 1";
-    char UPDATE_SENSOR2[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 2";
-    char UPDATE_SENSOR3[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 3";
-    char UPDATE_SENSOR4[] = 
-     "UPDATE sistema_de_monitoramento.sensor SET value = 0 WHERE id_sensor = 4";
-  }
-  
-  //executa as inserçes no banco de dados
-  if (my_conn.is_connected()) {
-    my_conn.cmd_query(UPDATE_VALVE1);
-    my_conn.cmd_query(UPDATE_VALVE2);
-    my_conn.cmd_query(UPDATE_PUMP1);
-    my_conn.cmd_query(UPDATE_PUMP2);
-    my_conn.cmd_query(UPDATE_SENSOR1);
-    my_conn.cmd_query(UPDATE_SENSOR2);
-    my_conn.cmd_query(UPDATE_SENSOR3);
-    my_conn.cmd_query(UPDATE_SENSOR4);
-    Serial.println("Inserts finsh!!!!!!!!!!!!!!!");
-  } else {
-    my_conn.disconnect();
-    Serial.println("Connecting...");
-    if (my_conn.mysql_connect(server_addr, 3306, user, password)) {
-      delay(500);
-      Serial.println("Success!");
-    } else {
-      Serial.println("Connect failed!");
-    }
-  }*/
 }
 
 void calculaNivel(){
@@ -335,30 +220,6 @@ void calculaNivel(){
     nivelCisterna = 20;
   else
     nivelCisterna = 00;
-    
-    
-    
-  /*
-  if (leituraSensor1 > 50){
-    statusSensor1 = 1;
-    if (leituraSensor2 > 50){
-      statusSensor2 = 1;
-      if (leituraSensor3 > 50){
-        statusSensor3 = 1;
-        if (leituraSensor4 > 50){
-          nivelCisterna = 80;
-        } else {
-          nivelCisterna = 60;
-        }
-      } else {
-        nivelCisterna = 40;
-      } 
-    } else {
-      nivelCisterna = 20;
-    }
-  } else {
-    nivelCisterna = 0;
-  }*/
 }
 
 //impede o funcionamento das bombas em caso de reservatrio vazio
