@@ -39,7 +39,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
-//#define WITH_SELECT  // Uncomment this to use SELECT queries
+#define WITH_SELECT  // Uncomment this to use SELECT queries
 
 //#define WITH_DEBUG   // Uncomment this for enabling debugging of messages
 

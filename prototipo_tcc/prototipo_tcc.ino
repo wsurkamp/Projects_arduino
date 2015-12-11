@@ -1,18 +1,17 @@
-#include <LiquidCrystal.h>
 #include "SPI.h"
 #include "Ethernet.h"
 #include "sha1.h"
 #include "mysql.h"
 
 //constantes para definiçao de portas de conexao dos componentes
-const int SensorAgua1 = 12;
-const int SensorAgua2 = 13;
-const int SensorAgua3 = 14;
-const int SensorAgua4 = 15;
-const int pump1 = 20;
-const int pump2 = 21;
-const int valve1 = 14;
-const int valve2 = 15;
+const int SensorAgua1 = 2;
+const int SensorAgua2 = 3;
+const int SensorAgua3 = 4;
+const int SensorAgua4 = 5;
+const int pump1 = 4;
+const int pump2 = 3;
+const int valve1 = 6;
+const int valve2 = 5;
 
 //variveis para leitura dos sensores
 int leituraSensor1 = 0;
@@ -29,7 +28,6 @@ int statusValve1 = 0;
 int statusValve2 = 0;
 int statusPump1 = 0;
 int statusPump2 = 0;
-
 int nivelCisterna = 0;
 
 //parmetros iniciais para funcionamento do sistema
@@ -37,10 +35,8 @@ int nivelFuncionamentoBombas = 20;
 int nivelAberturaValvulas = 40;
 int nivelFechamentoValvulas = 60;
 
-LiquidCrystal lcd(13,12,11,10,9,8);
-
-byte mac_addr[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; //endereço mac do ethernet shield
-IPAddress ip(192,168,1,3); //ip do arduino
+byte mac_addr[] = { 0xDE, 0xBE, 0xAD, 0xEF, 0xFE, 0xED }; //endereço mac do ethernet shield
+IPAddress ip(192,168,1,13); //ip do arduino
 IPAddress server_addr(192, 168, 1, 2); //ip do servidor MySQL
 
 Connector my_conn;
@@ -54,7 +50,7 @@ char UPDATE_VALVE1[] =
  "UPDATE sistema_de_monitoramento.valve SET open = %d WHERE id_valve = 1";
 char UPDATE_VALVE2[] = 
  "UPDATE sistema_de_monitoramento.valve SET open = %d WHERE id_valve = 2";
- 
+
 char UPDATE_PUMP1[] = 
  "UPDATE sistema_de_monitoramento.pump SET active = %d WHERE id_pump = 1";
 char UPDATE_PUMP2[] = 
@@ -69,15 +65,11 @@ char UPDATE_SENSOR3[] =
 char UPDATE_SENSOR4[] = 
  "UPDATE sistema_de_monitoramento.sensor SET value = %d WHERE id_sensor = 4";
 
-void setup(){
-  //inicializacao do sistema
-  lcd.begin(16,2);
-  lcd.setCursor(0,0);
-  lcd.print("Gerenciamento de");
-  lcd.setCursor(0,1);
-  lcd.print("Cisternas - TCC");
+char UPDATE_CISTERN1[] = 
+ "UPDATE sistema_de_monitoramento.cistern SET level = %d WHERE id_cistern = 1";
 
-  Ethernet.begin(mac_addr, ip);
+void setup(){
+  Ethernet.begin(mac_addr);
   Serial.begin(115200);
   Serial.print("Arduino IP ");
   Serial.println(Ethernet.localIP());
@@ -104,9 +96,7 @@ void loop(){
   
   calculaNivel(); //verifica nvel da cisterna
   
-  //verificaParametros(); //atualiza parametros de funcionamento do sistema
-  
-  escreveTela(); //indica nivel na cisterna no display LCD
+  verificaParametros(); //atualiza parametros de funcionamento do sistema
   
   verificaBombas(); //controla o funcionamento das bombas
   
@@ -114,7 +104,7 @@ void loop(){
   
   atualizaBanco(); //atualiza o stado dos componentes no banco de dados
   
-  delay(500);
+  delay(2000);
 }
 
 void atualizaBanco(){
@@ -128,6 +118,7 @@ void atualizaBanco(){
   char querySensor2[100];
   char querySensor3[100];
   char querySensor4[100];
+  char queryCistern1[100];
   
   //preparando querys para atualizaço do banco
   dtostrf(statusValve1, 1, 1, letterChar);
@@ -154,18 +145,10 @@ void atualizaBanco(){
   dtostrf(statusSensor4, 1, 1, letterChar);
   sprintf(querySensor4, UPDATE_SENSOR4, statusSensor4);
   
-  //verificando querys via escrita serial
-  Serial.println(queryValve1);
-  Serial.println(queryValve2);
-  Serial.println(queryPump1);
-  Serial.println(queryPump2);
-  Serial.println(querySensor1);
-  Serial.println(querySensor2);
-  Serial.println(querySensor3);
-  Serial.println(querySensor4);
+  dtostrf(nivelCisterna, 1, 1, letterChar);
+  sprintf(queryCistern1, UPDATE_CISTERN1, nivelCisterna);
   
-  
-   if (my_conn.is_connected()) {
+  if (my_conn.is_connected()) {
     //atualiza os dados no banco remoto
     my_conn.cmd_query(queryValve1);
     my_conn.cmd_query(queryValve2);
@@ -175,8 +158,9 @@ void atualizaBanco(){
     my_conn.cmd_query(querySensor2);
     my_conn.cmd_query(querySensor3);
     my_conn.cmd_query(querySensor4);
+    my_conn.cmd_query(queryCistern1);
     Serial.println("Updating database OK!");
-   } else {
+  } else {
     my_conn.disconnect();
     Serial.println("Connecting...");
     if (my_conn.mysql_connect(server_addr, 3306, user, password)) {
@@ -185,7 +169,7 @@ void atualizaBanco(){
     } else {
       Serial.println("Connect failed!");
     }
-   }
+  }
 }
 
 void calculaNivel(){
@@ -253,53 +237,42 @@ void verificaValvulas(){
   }
 }
 
-/*
+//atualizaçao dos parametros de funcionamento do sistema
 void verificaParametros(){
   int cont = 0;
-  char select_values[] = "SELECT value FROM operatingParameter";
-//  char selec_value_pump[] = "SELECT value FROM operatingParameter WHERE id_parameter = '1'";
-//  char selec_value_open_valve[] = "SELECT value FROM operatingParameter WHERE id_parameter = '2'";
-//  char selec_value_close_valve[] = "SELECT value FROM operatingParameter WHERE id_parameter = '3'";
+  char select_values[] = "SELECT value FROM sistema_de_monitoramento.operatingParameter";
 
-  my_conn.cmd_query(select_values);
-  my_conn.get_columns();
-  
-  row_values *row = NULL;
-  do {
-    row = my_conn.get_next_row();
-    if (row != NULL) {
-      if(cont == 0){
-        nivelFuncionamentoBombas = atol(row->values[0]);
-      } else if(cont == 1){
-        nivelAberturaValvulas = atol(row->values[0]);
-      } else if(cont == 2){
-        nivelFechamentoValvulas = atol(row->values[0]);
+  if (my_conn.is_connected()) {
+    
+    my_conn.cmd_query(select_values);
+    my_conn.get_columns();
+    
+    row_values *row = NULL;
+    do {
+      row = my_conn.get_next_row();
+      
+      if (row != NULL) {
+        if(cont == 0){
+          nivelFuncionamentoBombas = atoi(row->values[0]);
+        } else if(cont == 1){
+          nivelAberturaValvulas = atoi(row->values[0]);
+        } else if(cont == 2){
+          nivelFechamentoValvulas = atoi(row->values[0]);
+        }
       }
-    }
-    my_conn.free_row_buffer();
-  } while (row != NULL);
-  my_conn.free_columns_buffer();
-  
-  
+      my_conn.free_row_buffer();
+      cont = cont + 1;
+    } while (row != NULL);
+    my_conn.free_columns_buffer();  
+    delay(2000);
+  } else {
+     my_conn.disconnect();
+     Serial.println("Connecting...");
+     if (my_conn.mysql_connect(server_addr, 3306, user, password)) {
+       delay(500);
+       Serial.println("Success!");
+     } else {
+       Serial.println("Connect failed!");
+     }
+   }
 }
-*/
-
-//escreve as leituras do sensores em um painel lcd de cristal liquido
-void escreveTela(){
-  limpaTela();
-  
-  lcd.setCursor(0,0);
-  lcd.print("Nivel Cisterna:");
-  lcd.setCursor(0,1);
-  lcd.print(nivelCisterna);
-  lcd.print(" %");
-}
-
-//"limpa" a tela do painel LCD de cristal liquido
-void limpaTela(){
-  lcd.setCursor(0,0);
-  lcd.print("                ");
-  lcd.setCursor(0,1);
-  lcd.print("                ");
-}
-
